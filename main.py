@@ -51,7 +51,7 @@ def get_photo_urls(url: str) -> list[str]:
 
 
 def prepare_folder_name(text: str) -> str:
-    return re.sub(r'\s+', ' ', re.sub(r'[^@#\w\s-]', '', text).strip())
+    return re.sub(r'\s+', ' ', re.sub(r'[<>:"/\\|?*\x00-\x1F]', '', text).strip())
 
 
 page_title = re.compile(r'(?i)^(.+?(?:\((@.+?)\))?)(?:(?:\s+-)+\s+\d+\s+images|\s+\+18\s+\w+)\s+leaked\s+from.+$')
@@ -81,16 +81,16 @@ def list_entity(url: str, base_path: Path | None, prefix='', n: int | None = Non
     urls = get_photo_urls(url)
     print(f'{prefix}\tFound images: {len(urls)}')
     if len(urls) > 0:
-        print(f'{prefix}\tDownloading', end='')
+        print(f'{prefix}\tDownloading', end='', flush=True)
     for photo_url in urls:
         try:
             filename = os.path.basename(urlparse(photo_url).path)
             data = requests.get(urljoin(url, photo_url)).content
             with open(path.joinpath(filename), 'wb') as f:
                 f.write(data)
-            print('.', end='')
+            print('.', end='', flush=True)
         except:
-            print('!', end='')
+            print('!', end='', flush=True)
     print('Done!')
 
 
@@ -129,8 +129,8 @@ def list_category(url: str, args: argparse.Namespace):
     for i, entity_url in enumerate(urls):
         try:
             list_entity(urljoin(url, entity_url), path, '\t', i)
-        except ValueError:
-            pass
+        except BaseException as e:
+            print(f'Error: {e}')
 
 
 def main():
